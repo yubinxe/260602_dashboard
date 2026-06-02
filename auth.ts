@@ -7,6 +7,7 @@ const allowedDomains = (process.env.ALLOWED_HOSTED_DOMAINS ?? '')
   .filter(Boolean)
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID ?? '',

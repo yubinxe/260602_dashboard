@@ -1,14 +1,7 @@
 import { google } from 'googleapis'
 
-export interface SheetRow {
-  no: string
-  이름: string
-  이메일: string
-  '1일차 URL': string
-  '2일차 URL (오전)': string
-  '3일차 URL': string
-  [key: string]: string
-}
+/** A sheet row is a generic header→value map (schema is NOT hardcoded). */
+export type SheetRow = Record<string, string>
 
 export interface SheetData {
   headers: string[]
@@ -16,14 +9,16 @@ export interface SheetData {
   fetchedAt: string
 }
 
+const DEFAULT_SHEET_ID = '1zVrJhs_0sB3wSP-vpV23usjBfS7zfPeBi8oTx_jZ9qw'
+const DEFAULT_GID = '262406245'
+
 export async function fetchSheetData(): Promise<SheetData> {
-  const sheetId =
-    process.env.GOOGLE_SHEETS_ID ?? '1zVrJhs_0sB3wSP-vpV23usjBfS7zfPeBi8oTx_jZ9qw'
-  const gid = process.env.GOOGLE_SHEET_GID ?? '1234434521'
+  const sheetId = process.env.GOOGLE_SHEETS_ID ?? DEFAULT_SHEET_ID
+  const gid = process.env.GOOGLE_SHEET_GID ?? DEFAULT_GID
   const saJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
   const fetchedAt = new Date().toISOString()
 
-  // Service account path
+  // ── Service account path (spreadsheets.readonly) ──────────────────────────
   if (saJson && !saJson.startsWith('여기에')) {
     try {
       const credentials = JSON.parse(saJson)
@@ -32,15 +27,14 @@ export async function fetchSheetData(): Promise<SheetData> {
         scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
       })
       const sheets = google.sheets({ version: 'v4', auth })
-      const tab = process.env.GOOGLE_SHEET_TAB ?? 'dummy mail data'
+      const tab = process.env.GOOGLE_SHEET_TAB ?? 'dummy mail data의 사본'
       const res = await sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
         range: tab,
       })
       const rawRows = (res.data.values ?? []) as string[][]
       if (rawRows.length === 0) return { headers: [], rows: [], fetchedAt }
-
-      const headers = rawRows[0].map((h) => h?.trim() ?? '').filter(Boolean)
+      const headers = rawRows[0].map((h) => (h ?? '').trim()).filter(Boolean)
       const rows = parseRows(headers, rawRows.slice(1))
       return { headers, rows, fetchedAt }
     } catch (e) {
@@ -48,7 +42,7 @@ export async function fetchSheetData(): Promise<SheetData> {
     }
   }
 
-  // Public CSV fallback (works for publicly shared sheets)
+  // ── Public CSV fallback (publicly shared sheet) ───────────────────────────
   return fetchPublicCSV(sheetId, gid, fetchedAt)
 }
 
@@ -62,50 +56,73 @@ async function fetchPublicCSV(
   if (!res.ok) throw new Error(`Sheet fetch failed: ${res.status} ${res.statusText}`)
   const text = await res.text()
 
-  const lines = text.split('\n').filter((l) => l.trim())
-  if (lines.length === 0) return { headers: [], rows: [], fetchedAt }
+  const records = parseCSV(text)
+  if (records.length === 0) return { headers: [], rows: [], fetchedAt }
 
-  const headers = parseCSVLine(lines[0]).filter(Boolean)
-  const rows = parseRows(
-    headers,
-    lines.slice(1).map(parseCSVLine)
-  )
+  const headers = records[0].map((h) => h.trim()).filter(Boolean)
+  const rows = parseRows(headers, records.slice(1))
   return { headers, rows, fetchedAt }
 }
 
-function parseCSVLine(line: string): string[] {
-  const result: string[] = []
+/**
+ * Full RFC-4180-ish CSV parser that correctly handles quoted fields
+ * containing commas AND embedded newlines (the AI 회신초안 column has them).
+ */
+function parseCSV(text: string): string[][] {
+  const rows: string[][] = []
+  let row: string[] = []
   let cur = ''
   let inQuote = false
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i]
-    if (ch === '"') {
-      if (inQuote && line[i + 1] === '"') {
-        cur += '"'
-        i++
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]
+    if (inQuote) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          cur += '"'
+          i++
+        } else {
+          inQuote = false
+        }
       } else {
-        inQuote = !inQuote
+        cur += ch
       }
-    } else if (ch === ',' && !inQuote) {
-      result.push(cur.trim())
-      cur = ''
     } else {
-      cur += ch
+      if (ch === '"') {
+        inQuote = true
+      } else if (ch === ',') {
+        row.push(cur)
+        cur = ''
+      } else if (ch === '\n') {
+        row.push(cur)
+        rows.push(row)
+        row = []
+        cur = ''
+      } else if (ch === '\r') {
+        // ignore; handled by \n
+      } else {
+        cur += ch
+      }
     }
   }
-  result.push(cur.trim())
-  return result
+  // flush last field/row
+  if (cur.length > 0 || row.length > 0) {
+    row.push(cur)
+    rows.push(row)
+  }
+  return rows
 }
 
 function parseRows(headers: string[], rawRows: string[][]): SheetRow[] {
   return rawRows
-    .filter((row) => row.some((cell) => cell?.trim()))
+    .filter((row) => row.some((cell) => (cell ?? '').trim()))
     .map((row) => {
-      const obj: Record<string, string> = {}
+      const obj: SheetRow = {}
       headers.forEach((h, i) => {
         obj[h] = (row[i] ?? '').trim()
       })
-      return obj as SheetRow
+      return obj
     })
-    .filter((row) => row['이름']?.trim())
+    // keep a row only if its first column (id-like) or any cell has content
+    .filter((row) => Object.values(row).some((v) => v))
 }
