@@ -151,17 +151,18 @@ export function avg(nums: number[]): number {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Palette — cycle accent tokens for category slices
+// Palette — warm brand tones (olive / mustard / terracotta / dusty / sage / clay)
+// No neon, no purple. Harmonious "Knotted + London Bagel" neutrals.
 // ─────────────────────────────────────────────────────────────────────────────
 export const ACCENTS = [
-  'var(--accent)',
-  'var(--accent-3)',
-  'var(--accent-4)',
-  'var(--accent-2)',
-  'oklch(78% 0.13 320)',
-  'oklch(80% 0.13 190)',
-  'oklch(85% 0.12 110)',
-  'oklch(70% 0.12 260)',
+  '#5b5a31', // olive
+  '#c0871f', // mustard
+  '#b25a3a', // terracotta
+  '#5d7a83', // dusty blue
+  '#74854f', // sage
+  '#c2895c', // clay
+  '#9c6c14', // mustard deep
+  '#807e4d', // olive soft
 ]
 
 export function accentFor(i: number): string {
