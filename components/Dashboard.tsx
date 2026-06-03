@@ -52,6 +52,10 @@ function useCountUp(target: number, dur = 850): number {
   useEffect(() => {
     const from = prev.current
     prev.current = target
+    if (from === target) {
+      setV(target)
+      return
+    }
     let raf = 0
     let start: number | null = null
     const tick = (t: number) => {
@@ -60,9 +64,15 @@ function useCountUp(target: number, dur = 850): number {
       const eased = 1 - Math.pow(1 - p, 3)
       setV(Math.round(from + (target - from) * eased))
       if (p < 1) raf = requestAnimationFrame(tick)
+      else setV(target)
     }
     raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    // Hard guarantee: regardless of rAF throttling, land on the exact target.
+    const guard = setTimeout(() => setV(target), dur + 350)
+    return () => {
+      cancelAnimationFrame(raf)
+      clearTimeout(guard)
+    }
   }, [target, dur])
   return v
 }
