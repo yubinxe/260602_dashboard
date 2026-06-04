@@ -155,14 +155,14 @@ export function avg(nums: number[]): number {
 // No neon, no purple. Harmonious "Knotted + London Bagel" neutrals.
 // ─────────────────────────────────────────────────────────────────────────────
 export const ACCENTS = [
-  '#5b5a31', // olive
-  '#c0871f', // mustard
-  '#b25a3a', // terracotta
-  '#5d7a83', // dusty blue
-  '#74854f', // sage
-  '#c2895c', // clay
-  '#9c6c14', // mustard deep
-  '#807e4d', // olive soft
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+  'var(--chart-6)',
+  'var(--chart-7)',
+  'var(--chart-8)',
 ]
 
 export function accentFor(i: number): string {

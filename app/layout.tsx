@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <head>
         {/* Pretendard (본문/데이터) */}
         <link
@@ -25,6 +25,12 @@ export default function RootLayout({
         <link
           href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&display=swap"
           rel="stylesheet"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var t=localStorage.getItem('mt-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();",
+          }}
         />
       </head>
       <body>{children}</body>

@@ -420,7 +420,7 @@ function Heatmap({ matrix, accent }: { matrix: number[][]; accent: string }) {
   const max = matrixMax(matrix)
   return (
     <div style={{ overflowX: 'auto' }}>
-      <div style={{ display: 'inline-grid', gridTemplateColumns: 'auto repeat(24, 1fr)', gap: 4, minWidth: 560 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '30px repeat(24, 1fr)', gap: 5, width: '100%', minWidth: 480 }}>
         <div />
         {Array.from({ length: 24 }, (_, h) => (
           <div key={h} className="num" style={{ fontSize: 9.5, color: 'var(--ink-3)', textAlign: 'center' }}>{h % 6 === 0 ? h : ''}</div>
@@ -443,7 +443,7 @@ function HeatRow({ wd, row, max, accent }: { wd: number; row: number[]; max: num
           className="heat-cell"
           title={`${WEEKDAYS[wd]}요일 ${h}시 · ${v}건`}
           style={{
-            aspectRatio: '1',
+            height: 26,
             borderRadius: 5,
             background: v === 0 ? 'var(--oat)' : `color-mix(in srgb, ${accent} ${Math.round((v / max) * 78 + 18)}%, var(--paper))`,
           }}
@@ -604,6 +604,20 @@ export default function Dashboard({ headers, rows, schema, fetchedAt, guest = fa
   const [toast, setToast] = useState('')
   const [search, setSearch] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [dark, setDark] = useState(false)
+  useEffect(() => {
+    setDark(document.documentElement.getAttribute('data-theme') === 'dark')
+  }, [])
+  const toggleTheme = () => {
+    setDark((cur) => {
+      const next = !cur
+      const el = document.documentElement
+      if (next) el.setAttribute('data-theme', 'dark')
+      else el.removeAttribute('data-theme')
+      try { localStorage.setItem('mt-theme', next ? 'dark' : 'light') } catch {}
+      return next
+    })
+  }
 
   const sectionRefs = {
     time: useRef<HTMLDivElement>(null),
@@ -756,8 +770,16 @@ export default function Dashboard({ headers, rows, schema, fetchedAt, guest = fa
           {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 16, lineHeight: 1, padding: 2 }}>×</button>}
         </div>
 
-        {/* my-page avatar + menu */}
-        <div style={{ position: 'relative', flexShrink: 0 }}>
+        {/* theme toggle + my-page avatar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <button className="icon-btn" onClick={toggleTheme} aria-label="테마 전환" title={dark ? '라이트 모드로' : '다크 모드로'}>
+            {dark ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.4" stroke="currentColor" strokeWidth="2" /><g stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5" /></g></svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>
+            )}
+          </button>
+          <div style={{ position: 'relative' }}>
           <button className="avatar" onClick={() => setMenuOpen((o) => !o)} aria-label="마이페이지" style={{ background: guest ? 'var(--oat)' : 'color-mix(in srgb, var(--olive) 14%, var(--paper))' }}>
             {avatarInitial}
           </button>
@@ -783,6 +805,7 @@ export default function Dashboard({ headers, rows, schema, fetchedAt, guest = fa
               </div>
             </>
           )}
+          </div>
         </div>
       </header>
 

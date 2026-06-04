@@ -53,7 +53,67 @@
   --sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', system-ui, sans-serif;
   --serif: 'Newsreader', 'Pretendard Variable', ui-serif, Georgia, serif;
   --mono: 'Newsreader', 'Pretendard Variable', ui-monospace, monospace;
+
+  /* chart palette (테마 적응 — 다크에서 override) */
+  --chart-1: #5b5a31;
+  --chart-2: #c0871f;
+  --chart-3: #b25a3a;
+  --chart-4: #5d7a83;
+  --chart-5: #74854f;
+  --chart-6: #c2895c;
+  --chart-7: #9c6c14;
+  --chart-8: #807e4d;
 }
+
+/* ── dark mode (warm espresso, cozy — not harsh black) ─────────────────── */
+:root[data-theme="dark"] {
+  --cream: #1a1714;
+  --paper: #231e18;
+  --oat: #2c2620;
+  --sand: #463c2e;
+  --line: #3a3025;
+  --line-soft: #2b251d;
+
+  --ink: #f1eae0;
+  --ink-2: #bfb5a4;
+  --ink-3: #8d8576;
+  --ink-4: #645c4e;
+
+  --mustard: #d8a23e;
+  --mustard-deep: #e8b75a;
+  --olive: #9fa05f;
+  --olive-soft: #b3b37e;
+  --terracotta: #d4825c;
+  --sage: #9fb079;
+  --clay: #d2a378;
+  --butter: #ead07a;
+  --dusty: #84acb8;
+
+  --pos: #9fb079;
+  --warn: #d8a23e;
+  --neg: #d4825c;
+  --calm: #84acb8;
+
+  --chart-1: #9fa05f;
+  --chart-2: #d8a23e;
+  --chart-3: #d4825c;
+  --chart-4: #84acb8;
+  --chart-5: #9fb079;
+  --chart-6: #d2a378;
+  --chart-7: #e8b75a;
+  --chart-8: #b3b37e;
+
+  --sh-1: 0 1px 2px rgba(0,0,0,0.35);
+  --sh-2: 0 10px 26px -10px rgba(0,0,0,0.55), 0 3px 8px -3px rgba(0,0,0,0.4);
+  --sh-3: 0 28px 64px -22px rgba(0,0,0,0.7), 0 10px 24px -10px rgba(0,0,0,0.5);
+}
+:root[data-theme="dark"] body {
+  background-image:
+    radial-gradient(ellipse 70% 50% at 12% -5%, rgba(216,162,62,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 45% at 95% 8%, rgba(159,176,121,0.06) 0%, transparent 62%),
+    radial-gradient(ellipse 80% 60% at 50% 110%, rgba(212,130,92,0.05) 0%, transparent 60%);
+}
+html { transition: background-color 0.35s ease, color 0.35s ease; }
 
 *,
 *::before,
@@ -324,6 +384,21 @@ input, textarea { font-family: inherit; }
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .avatar:hover { transform: translateY(-1px); box-shadow: var(--sh-2); border-color: color-mix(in srgb, var(--mustard) 40%, var(--line)); }
+.icon-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: var(--sh-1);
+  color: var(--ink-2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.icon-btn:hover { transform: translateY(-1px); box-shadow: var(--sh-2); color: var(--ink); border-color: color-mix(in srgb, var(--mustard) 40%, var(--line)); }
+.icon-btn:active { transform: translateY(0) scale(0.95); }
 .menu {
   position: absolute;
   top: 54px;
