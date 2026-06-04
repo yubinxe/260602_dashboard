@@ -35,5 +35,13 @@ export default async function Page() {
     )
   }
 
-  return <IntroGate data={data} authed={!!session} login={loginWithGoogle} logout={logout} />
+  return (
+    <IntroGate
+      data={data}
+      authed={!!session}
+      account={session?.user?.email ?? null}
+      login={loginWithGoogle}
+      logout={logout}
+    />
+  )
 }

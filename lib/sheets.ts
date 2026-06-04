@@ -10,7 +10,7 @@ export interface SheetData {
 }
 
 const DEFAULT_SHEET_ID = '1zVrJhs_0sB3wSP-vpV23usjBfS7zfPeBi8oTx_jZ9qw'
-const DEFAULT_GID = '262406245'
+const DEFAULT_GID = '603004030'
 
 export async function fetchSheetData(): Promise<SheetData> {
   const sheetId = process.env.GOOGLE_SHEETS_ID ?? DEFAULT_SHEET_ID

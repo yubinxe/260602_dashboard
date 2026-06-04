@@ -18,11 +18,13 @@ type Phase = 'loading' | 'gate' | 'app'
 export default function IntroGate({
   data,
   authed,
+  account,
   login,
   logout,
 }: {
   data: Data
   authed: boolean
+  account?: string | null
   login: () => Promise<void>
   logout: () => Promise<void>
 }) {
@@ -76,8 +78,8 @@ export default function IntroGate({
 
   if (phase === 'app') {
     return (
-      <div className="anim-in">
-        <Dashboard {...data} guest={guest} onSignOut={handleSignOut} />
+      <div className="app-enter">
+        <Dashboard {...data} guest={guest} account={account} onSignOut={handleSignOut} />
       </div>
     )
   }
