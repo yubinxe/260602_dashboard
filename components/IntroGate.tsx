@@ -95,6 +95,7 @@ export default function IntroGate({
         justifyContent: 'center',
         padding: 24,
         position: 'relative',
+        overflow: 'hidden',
       }}
     >
       {phase === 'loading' ? (
@@ -173,74 +174,162 @@ function LoadingScene({ closing }: { closing: boolean }) {
 // Gate scene — Google login + guest
 // ════════════════════════════════════════════════════════════════════════════
 function GateScene({ login, onGuest }: { login: () => Promise<void>; onGuest: () => void }) {
+  const chips: [string, string][] = [
+    ['자동 분류', 'var(--olive)'],
+    ['SLA 추적', 'var(--terracotta)'],
+    ['감정 분석', 'var(--mustard)'],
+  ]
   return (
-    <div
-      className="card anim-in"
-      style={{
-        width: '100%',
-        maxWidth: 412,
-        padding: '40px 36px 34px',
-        borderRadius: 'var(--r-xl)',
-        boxShadow: 'var(--sh-3)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
-      }}
-    >
-      <LogoMark size={56} />
-      <h1 className="serif" style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginTop: 20 }}>
-        메일 트리아지
-      </h1>
-      <p style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.7, marginTop: 8, maxWidth: 300 }}>
-        고객 수신 메일을 분류·SLA·감정으로 한눈에.
-        <br />
-        팀 계정으로 로그인해 시작하세요.
-      </p>
-
-      {/* Google login */}
-      <form action={login} style={{ width: '100%', marginTop: 26 }}>
-        <button
-          type="submit"
-          className="btn"
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 10,
-            padding: '13px 18px',
-            fontSize: 14,
-            background: 'var(--paper)',
-            color: 'var(--ink)',
-            border: '1px solid var(--line)',
-            boxShadow: 'var(--sh-1)',
-            cursor: 'pointer',
-          }}
-        >
-          <GoogleG />
-          Google로 계속하기
-        </button>
-      </form>
-
-      {/* divider */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', margin: '18px 0' }}>
-        <hr className="hairline" style={{ flex: 1 }} />
-        <span className="eyebrow" style={{ color: 'var(--ink-4)' }}>또는</span>
-        <hr className="hairline" style={{ flex: 1 }} />
+    <>
+      {/* ambient drifting blobs */}
+      <div aria-hidden style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0 }}>
+        <span className="blob" style={{ width: 380, height: 380, top: '-7%', left: '-5%', background: 'color-mix(in srgb, var(--mustard) 55%, transparent)', animation: 'drift 17s ease-in-out infinite' }} />
+        <span className="blob" style={{ width: 340, height: 340, bottom: '-9%', right: '-5%', background: 'color-mix(in srgb, var(--terracotta) 50%, transparent)', animation: 'drift 21s ease-in-out infinite reverse' }} />
+        <span className="blob" style={{ width: 300, height: 300, top: '34%', right: '20%', background: 'color-mix(in srgb, var(--olive) 45%, transparent)', opacity: 0.38, animation: 'drift 24s ease-in-out infinite' }} />
       </div>
 
-      {/* guest */}
-      <button
-        onClick={onGuest}
-        className="btn btn-ghost"
-        style={{ width: '100%', padding: '13px 18px', fontSize: 14, cursor: 'pointer' }}
+      {/* floating mini data-viz (desktop) */}
+      <DecoDonut style={{ top: '17%', left: '11%', ['--rot' as string]: '-9deg' }} />
+      <DecoKpi style={{ top: '21%', right: '12%', ['--rot' as string]: '7deg' }} />
+      <DecoSpark style={{ bottom: '17%', right: '10%', ['--rot' as string]: '5deg' }} />
+      <DecoMood style={{ bottom: '20%', left: '12%', ['--rot' as string]: '-6deg' }} />
+
+      {/* frosted auth card */}
+      <div
+        className="anim-in"
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          width: '100%',
+          maxWidth: 440,
+          padding: '44px 40px 36px',
+          borderRadius: 'var(--r-xl)',
+          background: 'color-mix(in srgb, var(--paper) 78%, transparent)',
+          backdropFilter: 'blur(22px) saturate(1.5)',
+          WebkitBackdropFilter: 'blur(22px) saturate(1.5)',
+          border: '1px solid color-mix(in srgb, var(--mustard) 16%, var(--line))',
+          boxShadow: 'var(--sh-3)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+        }}
       >
-        게스트로 둘러보기
-      </button>
-      <p style={{ fontSize: 11.5, color: 'var(--ink-3)', lineHeight: 1.6, marginTop: 12 }}>
-        게스트는 집계 지표만 볼 수 있어요. 개별 메일·이메일 주소·AI 회신초안 등<br />민감 정보는 로그인 후 공개됩니다.
-      </p>
+        <div style={{ animation: 'breathe 4s ease-in-out infinite' }}>
+          <LogoMark size={58} />
+        </div>
+        <span className="eyebrow" style={{ marginTop: 18, color: 'var(--mustard)', fontSize: 13.5 }}>
+          Inbox, beautifully triaged
+        </span>
+        <h1 className="serif" style={{ fontSize: 38, fontWeight: 500, letterSpacing: '-0.025em', marginTop: 6, lineHeight: 1.12 }}>
+          메일 트리아지
+        </h1>
+        <p style={{ fontSize: 14.5, color: 'var(--ink-2)', lineHeight: 1.75, marginTop: 12, maxWidth: 322 }}>
+          고객 수신 메일을 분류·SLA·감정으로 한눈에.
+          <br />
+          오늘의 받은편지함을 우아하게 정리하세요.
+        </p>
+
+        {/* feature chips */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, justifyContent: 'center', marginTop: 18 }}>
+          {chips.map(([t, c]) => (
+            <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 999, fontSize: 12.5, fontWeight: 600, color: c, background: `color-mix(in srgb, ${c} 11%, var(--paper))`, border: `1px solid color-mix(in srgb, ${c} 24%, var(--line))` }}>
+              <span className="dot" style={{ width: 5, height: 5, background: c }} />
+              {t}
+            </span>
+          ))}
+        </div>
+
+        {/* live teaser */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 13, color: 'var(--ink-3)' }}>
+          <span style={{ display: 'inline-flex', gap: 4 }}>
+            {[0, 1, 2].map((i) => (
+              <span key={i} className="dot" style={{ width: 6, height: 6, background: 'var(--sage)', animation: `riseDot 1.1s ${i * 0.16}s ease-in-out infinite` }} />
+            ))}
+          </span>
+          지금 <b className="num" style={{ color: 'var(--ink)', fontWeight: 600 }}>300건</b> 분석 준비 완료
+        </div>
+
+        {/* Google */}
+        <form action={login} style={{ width: '100%', marginTop: 24 }}>
+          <button type="submit" className="btn linkpill" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '14px 18px', fontSize: 14.5, background: 'var(--paper)', color: 'var(--ink)', border: '1px solid var(--line)', boxShadow: 'var(--sh-1)', cursor: 'pointer', fontWeight: 600 }}>
+            <GoogleG />
+            Google로 계속하기
+          </button>
+        </form>
+
+        {/* divider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', margin: '16px 0' }}>
+          <hr className="hairline" style={{ flex: 1 }} />
+          <span className="eyebrow" style={{ color: 'var(--ink-4)' }}>또는</span>
+          <hr className="hairline" style={{ flex: 1 }} />
+        </div>
+
+        {/* Guest */}
+        <button onClick={onGuest} className="btn linkpill" style={{ width: '100%', padding: '14px 18px', fontSize: 14.5, cursor: 'pointer', fontWeight: 600, color: 'var(--mustard-deep)', background: 'color-mix(in srgb, var(--mustard) 13%, var(--paper))', border: '1px solid color-mix(in srgb, var(--mustard) 30%, var(--line))' }}>
+          ✦ 게스트로 둘러보기
+        </button>
+        <p style={{ fontSize: 11.5, color: 'var(--ink-3)', lineHeight: 1.6, marginTop: 12 }}>
+          게스트는 집계 지표만 볼 수 있어요. 개별 메일·이메일 주소·AI 회신초안 등
+          <br />
+          민감 정보는 로그인 후 공개됩니다.
+        </p>
+      </div>
+    </>
+  )
+}
+
+function DecoDonut({ style }: { style: React.CSSProperties }) {
+  const C = 2 * Math.PI * 16
+  const segs: [number, string][] = [[0.42, 'var(--chart-1)'], [0.28, 'var(--chart-2)'], [0.18, 'var(--chart-3)'], [0.12, 'var(--chart-4)']]
+  let off = 0
+  return (
+    <div className="gate-deco gate-glass" style={{ padding: '12px 15px', display: 'flex', alignItems: 'center', gap: 11, animation: 'floaty 7s ease-in-out infinite', ...style }}>
+      <svg width={46} height={46} viewBox="0 0 46 46">
+        <circle cx={23} cy={23} r={16} fill="none" stroke="var(--oat)" strokeWidth={6} />
+        {segs.map(([f, c], i) => {
+          const len = f * C
+          const el = <circle key={i} cx={23} cy={23} r={16} fill="none" stroke={c} strokeWidth={6} strokeDasharray={`${len} ${C - len}`} strokeDashoffset={-off} transform="rotate(-90 23 23)" />
+          off += len
+          return el
+        })}
+      </svg>
+      <div style={{ textAlign: 'left' }}>
+        <div className="microlabel" style={{ fontSize: 9.5 }}>분류</div>
+        <div className="num" style={{ fontSize: 16, color: 'var(--ink)' }}>8종</div>
+      </div>
+    </div>
+  )
+}
+
+function DecoKpi({ style }: { style: React.CSSProperties }) {
+  return (
+    <div className="gate-deco gate-glass" style={{ padding: '13px 17px', textAlign: 'left', animation: 'floaty 6.5s ease-in-out infinite', ...style }}>
+      <div className="microlabel" style={{ fontSize: 9.5 }}>미회신</div>
+      <div className="num" style={{ fontSize: 28, color: 'var(--olive)', lineHeight: 1, marginTop: 3 }}>228</div>
+    </div>
+  )
+}
+
+function DecoSpark({ style }: { style: React.CSSProperties }) {
+  return (
+    <div className="gate-deco gate-glass" style={{ padding: '12px 14px', width: 138, animation: 'floaty 8s ease-in-out infinite', ...style }}>
+      <div className="microlabel" style={{ fontSize: 9.5, marginBottom: 7 }}>수신 추이</div>
+      <svg width="100%" height={32} viewBox="0 0 100 32" preserveAspectRatio="none">
+        <polyline points="0,25 14,17 28,21 42,9 56,15 70,5 84,13 100,7" fill="none" stroke="var(--dusty)" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  )
+}
+
+function DecoMood({ style }: { style: React.CSSProperties }) {
+  return (
+    <div className="gate-deco gate-glass" style={{ padding: '11px 15px', display: 'flex', alignItems: 'center', gap: 9, animation: 'floaty 7.5s ease-in-out infinite', ...style }}>
+      <span className="serif" style={{ fontSize: 19, color: 'var(--sage)' }}>◠‿◠</span>
+      <div style={{ textAlign: 'left' }}>
+        <div className="microlabel" style={{ fontSize: 9.5 }}>감정</div>
+        <div style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 600 }}>긍정적</div>
+      </div>
     </div>
   )
 }
