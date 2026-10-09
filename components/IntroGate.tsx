@@ -274,6 +274,12 @@ function GateScene({ login, onGuest }: { login: () => Promise<void>; onGuest: ()
           <br />
           민감 정보는 로그인 후 공개됩니다.
         </p>
+        <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--line)', width: '100%' }}>
+          기획·개발{' '}
+          <a href="https://yubinxe.github.io/Portfolio/" target="_blank" rel="author noopener" style={{ color: 'var(--ink-2)', fontWeight: 600, textDecoration: 'none', borderBottom: '1px solid var(--line)' }}>
+            김유빈 Yubin Kim · 포트폴리오 ↗
+          </a>
+        </p>
       </div>
     </>
   )

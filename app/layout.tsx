@@ -1,9 +1,25 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
+const PORTFOLIO = 'https://yubinxe.github.io/Portfolio/'
+
 export const metadata: Metadata = {
   title: '메일 트리아지 대시보드',
-  description: '고객 수신 메일 분류·SLA·감정 분석 읽기 전용 대시보드',
+  description: '고객 수신 메일 분류·SLA·감정 분석 읽기 전용 대시보드. 김유빈(Yubin Kim) 기획·개발.',
+  authors: [{ name: '김유빈 (Yubin Kim)', url: PORTFOLIO }],
+  creator: '김유빈 (Yubin Kim)',
+}
+
+/** 제작자 연결 — 포트폴리오의 Person(@id)과 같은 사람으로 묶는다. */
+const JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: '메일 트리아지 대시보드 — Google Workspace 연동 VOC 트리아지',
+  url: 'https://mail-dashboard-blue-six.vercel.app/',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  inLanguage: 'ko-KR',
+  creator: { '@type': 'Person', '@id': PORTFOLIO + '#person', name: '김유빈', alternateName: 'Yubin Kim', url: PORTFOLIO },
 }
 
 export default function RootLayout({
@@ -33,7 +49,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
+        {children}
+      </body>
     </html>
   )
 }
