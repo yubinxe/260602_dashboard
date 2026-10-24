@@ -512,3 +512,22 @@ input, textarea { font-family: inherit; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ── triage board ───────────────────────────────────────── */
+.lanes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.lane {
+  display: flex; flex-direction: column; align-items: flex-start; text-align: left;
+  padding: 16px 16px 15px; border-radius: 18px; cursor: pointer; font: inherit;
+  background: color-mix(in srgb, var(--c) 6%, var(--paper));
+  border: 1px solid color-mix(in srgb, var(--c) 22%, var(--line));
+  border-top: 4px solid var(--c);
+  transition: opacity .2s, box-shadow .2s, transform .2s;
+}
+.lane:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
+.lane.on { box-shadow: 0 0 0 2px var(--c), var(--sh-2); }
+.lane-late {
+  margin-top: 9px; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
+  color: var(--terracotta); background: color-mix(in srgb, var(--terracotta) 11%, var(--paper));
+}
+@media (max-width: 1000px) { .lanes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lane:first-child { grid-column: span 2; } }

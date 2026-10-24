@@ -151,6 +151,10 @@ function Eyebrow({ en, ko, accent, big }: { en: string; ko: string; accent: stri
   )
 }
 
+/* 시트 용어 → 쉬운 말 */
+const PLAIN: Record<string, string> = { 지연: '답장 기한 지남', 검토필요: '사람 확인 필요', SLA기한: '답장 기한' }
+const plain = (s: string) => PLAIN[s] ?? s
+
 function Strong({ children, color }: { children: React.ReactNode; color: string }) {
   return <strong style={{ color, fontWeight: 600 }}>{children}</strong>
 }
@@ -182,6 +186,82 @@ function KPICard({
         {animated.toLocaleString()}
       </div>
       {unit && <div style={{ fontSize: 13.5, color: 'var(--ink-2)', marginTop: 9, fontWeight: 500 }}>{unit}</div>}
+    </div>
+  )
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Triage board — 응급실처럼 급한 순서대로 5칸에 나눠 담는다
+// ════════════════════════════════════════════════════════════════════════════
+export type Lane = 'now' | 'today' | 'later' | 'auto' | 'done'
+
+const LANES: { id: Lane; icon: string; title: string; why: string; accent: string }[] = [
+  { id: 'now', icon: '🔴', title: '지금 답장', why: '중요하거나 조치가 필요한데 아직 답장 안 한 메일', accent: 'var(--terracotta)' },
+  { id: 'today', icon: '🟡', title: '오늘 안에', why: '중요도 보통 · 답장 대기 중', accent: 'var(--mustard-deep)' },
+  { id: 'later', icon: '🟢', title: '여유 있을 때', why: '가벼운 문의 · 답장 대기 중', accent: 'var(--sage)' },
+  { id: 'auto', icon: '⚙', title: '자동 정리됨', why: '광고 · 자동 알림 — 사람이 볼 필요 없음', accent: 'var(--dusty)' },
+  { id: 'done', icon: '✓', title: '답장 끝', why: '이미 회신을 마친 메일', accent: 'var(--olive)' },
+]
+export const LANE_TITLE: Record<Lane, string> = Object.fromEntries(LANES.map((l) => [l.id, l.title])) as Record<Lane, string>
+
+function TriageBoard({
+  rows, laneOf, late, topOf, onPick, active,
+}: {
+  rows: SheetRow[]; laneOf: (r: SheetRow) => Lane; late: (r: SheetRow) => boolean
+  topOf: (rs: SheetRow[]) => CatCount[]; onPick: (l: Lane) => void; active?: Lane
+}) {
+  const by = useMemo(() => {
+    const m: Record<Lane, SheetRow[]> = { now: [], today: [], later: [], auto: [], done: [] }
+    for (const r of rows) m[laneOf(r)].push(r)
+    return m
+  }, [rows, laneOf])
+  const total = rows.length || 1
+  return (
+    <div className="card anim" style={{ animationDelay: '60ms', padding: '26px 28px 24px', borderRadius: 'var(--r-lg)', marginBottom: 18, boxShadow: 'var(--sh-2)' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '6px 14px', marginBottom: 6 }}>
+        <span style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink)' }}>무엇부터 볼까요?</span>
+        <span style={{ fontSize: 13, color: 'var(--ink-3)' }}>트리아지 = 응급실처럼 <b style={{ color: 'var(--ink-2)' }}>급한 것부터 줄 세우기</b></span>
+      </div>
+      <p style={{ fontSize: 14, color: 'var(--ink-2)', margin: '0 0 16px' }}>
+        받은 메일 {rows.length}건을 급한 순서대로 5칸에 나눴어요. 칸을 누르면 그 메일만 보여요.
+      </p>
+      {/* 한 줄 막대 — 칸별 비율 */}
+      <div role="img" aria-label="칸별 비율" style={{ display: 'flex', height: 12, borderRadius: 999, overflow: 'hidden', background: 'var(--oat)', marginBottom: 18 }}>
+        {LANES.map((l) => by[l.id].length > 0 && (
+          <span key={l.id} title={`${l.title} ${by[l.id].length}건`} style={{ width: `${(by[l.id].length / total) * 100}%`, background: l.accent, opacity: active && active !== l.id ? 0.3 : 1, transition: 'opacity .2s, width .6s' }} />
+        ))}
+      </div>
+      <div className="lanes">
+        {LANES.map((l, i) => {
+          const rs = by[l.id]
+          const lateN = l.id === 'now' || l.id === 'today' || l.id === 'later' ? rs.filter(late).length : 0
+          const top = topOf(rs).slice(0, 2)
+          const on = active === l.id
+          return (
+            <button
+              key={l.id}
+              onClick={() => onPick(l.id)}
+              className={`lane lift anim${on ? ' on' : ''}`}
+              aria-pressed={on}
+              style={{ ['--c' as string]: l.accent, animationDelay: `${90 + i * 60}ms`, opacity: active && !on ? 0.55 : 1 }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 14.5, fontWeight: 700, color: 'var(--ink)' }}>
+                <span aria-hidden style={{ color: l.accent }}>{l.icon}</span>{l.title}
+              </span>
+              <span className="kpi-num" style={{ fontSize: 40, fontWeight: 500, color: l.accent, lineHeight: 1.05, marginTop: 10 }}>
+                {rs.length}<span style={{ fontSize: 14, color: 'var(--ink-3)', marginLeft: 4 }}>건</span>
+              </span>
+              <span style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.5, marginTop: 6, minHeight: 38 }}>{l.why}</span>
+              {lateN > 0 && <span className="lane-late">⏰ 답장 기한 지남 {lateN}건</span>}
+              {top.length > 0 && (
+                <span style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 8 }}>
+                  주로 {top.map((t) => `${t.label} ${t.count}`).join(' · ')}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -684,12 +764,12 @@ export default function Dashboard({ headers, rows, schema, fetchedAt, guest = fa
   const kpiAccents = ['var(--dusty)', 'var(--terracotta)', 'var(--mustard)', 'var(--olive)']
   const kpiEn = ['total', 'delayed', 'review', 'pending']
   const kpis: { en: string; label: string; value: number; unit?: string; accent: string; onClick?: () => void; active?: boolean }[] = [
-    { en: 'total', label: '총 티켓', value: vTotal, unit: filter ? `건 · 전체 ${total}건 중` : '건', accent: kpiAccents[0] },
+    { en: 'total', label: '받은 메일', value: vTotal, unit: filter ? `건 · 전체 ${total}건 중` : '건', accent: kpiAccents[0] },
   ]
-  flagCols.forEach((fc) => kpis.push({ en: 'flag', label: fc, value: count(fc), unit: `건 · ${pct(count(fc))}%`, accent: 'var(--terracotta)', onClick: () => pickFlag(fc), active: filter?.key === `flag:${fc}` }))
+  flagCols.forEach((fc) => kpis.push({ en: 'flag', label: plain(fc), value: count(fc), unit: `건 · ${pct(count(fc))}%`, accent: 'var(--terracotta)', onClick: () => pickFlag(fc), active: filter?.key === `flag:${fc}` }))
   if (replyCol && miLabel) {
     const v = view.filter((r) => (r[replyCol] ?? '').trim() === miLabel).length
-    kpis.push({ en: 'pending', label: '미회신', value: v, unit: `건 · ${pct(v)}%`, accent: 'var(--olive)', onClick: () => pickCat(replyCol, miLabel), active: filter?.key === `${replyCol}:${miLabel}` })
+    kpis.push({ en: 'pending', label: '아직 답장 안 함', value: v, unit: `건 · ${pct(v)}%`, accent: 'var(--olive)', onClick: () => pickCat(replyCol, miLabel), active: filter?.key === `${replyCol}:${miLabel}` })
   }
   const kpi4 = kpis.slice(0, 4).map((k, i) => ({ ...k, accent: kpiAccents[i] ?? k.accent, en: kpiEn[i] ?? k.en }))
 
@@ -709,6 +789,29 @@ export default function Dashboard({ headers, rows, schema, fetchedAt, guest = fa
         return eb - ea
       })
   }, [view, reviewFlag, impCol, elapsedCol])
+
+  // ── triage lanes ──────────────────────────────────────────────────────
+  const delayFlag = flagCols.find((c) => c.includes('지연'))
+  const topicCol = catCols.find((c) => c === '분류') ?? catCols.find((c) => c !== replyCol && c !== statusCol)
+  const laneOf = useMemo(() => (r: SheetRow): Lane => {
+    const reply = replyCol ? (r[replyCol] ?? '').trim() : ''
+    const st = statusCol ? (r[statusCol] ?? '').trim() : ''
+    if (reply && reply !== miLabel) return 'done'
+    if (st === '회신완료') return 'done'
+    if (st === '자동분류') return 'auto'
+    const imp = impCol ? Number(r[impCol]) || 0 : 0
+    if (st === '조치필요' || imp >= 7) return 'now'
+    if (imp >= 4) return 'today'
+    return 'later'
+  }, [replyCol, statusCol, miLabel, impCol])
+  const late = useMemo(() => (r: SheetRow) => !!(delayFlag && (r[delayFlag] ?? '').trim()), [delayFlag])
+  const topOf = useMemo(() => (rs: SheetRow[]) => (topicCol ? categoryCounts(rs, topicCol) : []), [topicCol])
+  const activeLane = filter?.key.startsWith('lane:') ? (filter.key.slice(5) as Lane) : undefined
+  const pickLane = (l: Lane) => {
+    const key = `lane:${l}`
+    setFilter((f) => (f?.key === key ? null : { key, label: LANE_TITLE[l], test: (r) => laneOf(r) === l }))
+    if (filter?.key !== key) setOpen((p) => ({ ...p, [guest ? 'table' : 'review']: true, table: true }))
+  }
 
   const fmt = (iso: string) => {
     try {
@@ -734,15 +837,15 @@ export default function Dashboard({ headers, rows, schema, fetchedAt, guest = fa
   if (sentimentCol) bento.push({ kind: 'mood', col: sentimentCol })
   donutCats.slice(1).forEach((c) => bento.push({ kind: 'donut', col: c }))
 
-  const diag: React.ReactNode[] = [<>전체 <Strong color={C_INK}>{total}건</Strong></>]
+  const diag: React.ReactNode[] = [<>받은 메일 <Strong color={C_INK}>{total}건</Strong></>]
   if (replyCol && miLabel) {
     const mi = view.filter((r) => (r[replyCol] ?? '').trim() === miLabel).length
-    diag.push(<> · 미회신 <Strong color="var(--olive)">{mi}건</Strong> ({pct(mi)}%)</>)
+    diag.push(<> · 아직 답장 안 함 <Strong color="var(--olive)">{mi}건</Strong> ({pct(mi)}%)</>)
   }
-  flagCols.forEach((fc) => diag.push(<> · {fc} <Strong color="var(--terracotta)">{count(fc)}건</Strong></>))
+  flagCols.forEach((fc) => diag.push(<> · {plain(fc)} <Strong color="var(--terracotta)">{count(fc)}건</Strong></>))
   if (statusCol) {
     const ac = view.filter((r) => (r[statusCol] ?? '').trim() === '조치필요').length
-    if (ac) diag.push(<> · 조치필요 <Strong color="var(--mustard-deep)">{ac}건</Strong></>)
+    if (ac) diag.push(<> · 조치 필요 <Strong color="var(--mustard-deep)">{ac}건</Strong></>)
   }
 
   const avatarInitial = guest ? 'G' : (account?.trim()?.[0]?.toUpperCase() ?? '·')
@@ -825,12 +928,16 @@ export default function Dashboard({ headers, rows, schema, fetchedAt, guest = fa
 
         {/* Hero */}
         <div className="card anim" style={{ animationDelay: '40ms', padding: '30px 34px', borderRadius: 'var(--r-lg)', marginBottom: 18, boxShadow: 'var(--sh-2)' }}>
-          <Eyebrow en="overview" ko="진단 요약" accent="var(--mustard)" big />
+          <Eyebrow en="overview" ko="한 줄 요약" accent="var(--mustard)" big />
           <p style={{ fontSize: 19, color: 'var(--ink)', lineHeight: 1.9, marginTop: 14, letterSpacing: '-0.01em', fontWeight: 400 }}>{diag.map((p, i) => <span key={i}>{p}</span>)}</p>
         </div>
 
+        {(replyCol || statusCol) && (
+          <TriageBoard rows={rows} laneOf={laneOf} late={late} topOf={topOf} onPick={pickLane} active={activeLane} />
+        )}
+
         {/* KPIs */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16, marginBottom: 12 }}>
           {kpi4.map((k, i) => (
             <KPICard key={k.label} {...k} delay={80 + i * 70} />
           ))}
@@ -838,12 +945,12 @@ export default function Dashboard({ headers, rows, schema, fetchedAt, guest = fa
 
         {/* expand-all toggle */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 4px 6px' }}>
-          <span className="microlabel">상세 분석 · DETAILS</span>
+          <span className="microlabel">더 자세히 · DETAILS</span>
           <button className="toggle-link" onClick={toggleAll}>{allOpen ? '모두 접기 −' : '모두 펼치기 +'}</button>
         </div>
 
         {dtCol && (
-          <Section id="sec-time" innerRef={sectionRefs.time} en="trend" title="수신 추이 & 시간대" accent="var(--dusty)" isOpen={open.time} onToggle={() => toggle('time')} meta={`${dtCol}${slaCol ? ` · ${slaCol}` : ''}`} delay={120}>
+          <Section id="sec-time" innerRef={sectionRefs.time} en="trend" title="언제 많이 오나" accent="var(--dusty)" isOpen={open.time} onToggle={() => toggle('time')} meta={`받은 시각${slaCol ? ` · ${plain(slaCol)}` : ''}`} delay={120}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 26 }}>
               <div>
                 <div className="microlabel" style={{ marginBottom: 14 }}>일자별 수신량</div>
@@ -859,7 +966,7 @@ export default function Dashboard({ headers, rows, schema, fetchedAt, guest = fa
         )}
 
         {(catCols.length > 0 || numDist.length > 0) && (
-          <Section id="sec-dist" innerRef={sectionRefs.dist} en="distribution" title="분류 · 상태 분포" accent="var(--olive)" isOpen={open.dist} onToggle={() => toggle('dist')} meta={`${catCols.length}개 범주 · 클릭해 필터`} delay={150}>
+          <Section id="sec-dist" innerRef={sectionRefs.dist} en="distribution" title="어떤 메일이 많나" accent="var(--olive)" isOpen={open.dist} onToggle={() => toggle('dist')} meta={`${catCols.length}개 범주 · 클릭해 필터`} delay={150}>
             {/* bento grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 16, gridAutoFlow: 'dense' }}>
               {bento.map((t, i) =>
@@ -887,7 +994,7 @@ export default function Dashboard({ headers, rows, schema, fetchedAt, guest = fa
         )}
 
         {emailCol && (
-          <Section id="sec-sender" innerRef={sectionRefs.sender} en="senders" title="발신자 분석" accent="var(--terracotta)" isOpen={open.sender} onToggle={() => toggle('sender')} meta={`${emailCol} · 클릭해 필터`} delay={180}>
+          <Section id="sec-sender" innerRef={sectionRefs.sender} en="senders" title="누가 보냈나" accent="var(--terracotta)" isOpen={open.sender} onToggle={() => toggle('sender')} meta={`${emailCol} · 클릭해 필터`} delay={180}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))', gap: 30 }}>
               <div>
                 <div className="microlabel" style={{ marginBottom: 14 }}>Top 도메인</div>
@@ -906,7 +1013,7 @@ export default function Dashboard({ headers, rows, schema, fetchedAt, guest = fa
         )}
 
         {longCol && reviewFlag && !guest && (
-          <Section id="sec-review" innerRef={sectionRefs.review} en="review" title="검토 뷰 — AI 회신초안" accent="var(--terracotta)" isOpen={open.review} onToggle={() => toggle('review')} meta={`${reviewRows.length}건 · ${reviewFlag}`} delay={210}>
+          <Section id="sec-review" innerRef={sectionRefs.review} en="review" title="사람 확인 — AI 답장 초안" accent="var(--terracotta)" isOpen={open.review} onToggle={() => toggle('review')} meta={`${reviewRows.length}건 · ${reviewFlag}`} delay={210}>
             {reviewRows.length === 0 ? (
               <div style={{ color: 'var(--ink-3)', fontSize: 14, padding: '12px 0' }}>검토 대상이 없습니다.</div>
             ) : (
@@ -920,12 +1027,12 @@ export default function Dashboard({ headers, rows, schema, fetchedAt, guest = fa
           </Section>
         )}
 
-        <Section id="sec-table" innerRef={sectionRefs.table} en="records" title="전체 데이터 테이블" accent="var(--mustard)" isOpen={open.table} onToggle={() => toggle('table')} meta={`${vTotal}건 · ${headers.length}열`} delay={240}>
+        <Section id="sec-table" innerRef={sectionRefs.table} en="records" title="전체 목록" accent="var(--mustard)" isOpen={open.table} onToggle={() => toggle('table')} meta={`${vTotal}건 · ${headers.length}열`} delay={240}>
           <DataTable headers={headers} rows={view} schema={schema} guest={guest} search={search} />
         </Section>
 
         <div className="eyebrow" style={{ textAlign: 'center', marginTop: 30, color: 'var(--ink-3)', fontSize: 13 }}>
-          STEP 0 자동 스키마 추론 · STEP 2 타입별 시각화 자동 매핑 · 읽기 전용
+          시트의 열 이름을 읽고 알맞은 차트를 자동으로 고릅니다 · 보기 전용(원본은 바뀌지 않아요)
         </div>
       </main>
 
